@@ -32,7 +32,44 @@ func GetExercise(request ExerciseRequest) (Exercise, error) {
 }
 
 func generateDropSets(inputs []AddUserInput) []Dropset {
-	return []Dropset{}
+
+	dropsets := []Dropset{}
+
+	makeDropset := func(reps []float64, weights []float64, variances []float64, sets int, weight float64, totalWeight float64, averageRep float64, averageWeight float64, averageWeightRepTotal float64) Dropset {
+		return Dropset{
+			Reps:                  reps,
+			Weights:               weights,
+			Sets:                  sets,
+			Variances:             variances,
+			Weight:                weight,
+			TotalWeight:           totalWeight,
+			AverageWeight:         averageWeight,
+			AverageRep:            averageRep,
+			AverageWeightRepTotal: averageWeightRepTotal,
+		}
+	}
+
+	for _, dropset := range inputs {
+		var totalWeight float64 = 0
+		var totalWeightRep float64
+		var totalReps float64 = 0
+		for i, w := range dropset.Weights {
+			totalWeightRep += w * dropset.Reps[i]
+			totalReps += dropset.Reps[i]
+			totalWeight += w
+		}
+		dropset.Sets = len(dropset.Reps)
+
+		dropset := makeDropset(dropset.Reps, dropset.Weights, Map(dropset.Weights, func(item float64) float64 { return (item - dropset.Weight) }),
+			dropset.Sets,
+			dropset.Weight,
+			totalWeightRep, totalReps/float64(len(dropset.Reps)), totalWeight/float64(len(dropset.Weights)), totalWeightRep/float64(len(dropset.Weights)))
+
+		dropsets = append(dropsets, dropset)
+
+	}
+
+	return dropsets
 }
 
 func AddExercise(request AddExerciseRequest) error {
@@ -51,22 +88,22 @@ func AddExercise(request AddExerciseRequest) error {
 
 	dropsets := generateDropSets(request.Dropsets)
 
-	x := request.MainSet
+	mainset := request.MainSet
 
 	var totalWeight float64 = 0
 	var totalWeightRep float64
 	var totalReps float64 = 0
-	for i, w := range x.Weights {
-		totalWeightRep += w * x.Reps[i]
-		totalReps += x.Reps[i]
+	for i, w := range mainset.Weights {
+		totalWeightRep += w * mainset.Reps[i]
+		totalReps += mainset.Reps[i]
 		totalWeight += w
 	}
 
-	exerciseInstance.Iterations[len(exerciseInstance.Iterations)] = *NewIteration(x.Reps, x.Weights, Map(x.Weights, func(item float64) float64 { return (item - x.Weight) }), newID,
-		x.Sets,
-		x.Weight,
-		x.Date,
-		x.Note, totalWeightRep, totalReps/float64(len(x.Reps)), totalWeight/float64(len(x.Weights)), totalWeightRep/float64(len(x.Weights)), dropsets)
+	exerciseInstance.Iterations[len(exerciseInstance.Iterations)] = *NewIteration(mainset.Reps, mainset.Weights, Map(mainset.Weights, func(item float64) float64 { return (item - mainset.Weight) }), newID,
+		mainset.Sets,
+		mainset.Weight,
+		mainset.Date,
+		mainset.Note, totalWeightRep, totalReps/float64(len(mainset.Reps)), totalWeight/float64(len(mainset.Weights)), totalWeightRep/float64(len(mainset.Weights)), dropsets)
 
 	user.Exercises[request.ExerciseIdentifier.ExerciseName] = exerciseInstance
 	//Save to DB
