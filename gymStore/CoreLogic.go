@@ -99,7 +99,9 @@ func AddExercise(request AddExerciseRequest) error {
 		totalWeight += w
 	}
 
-	exerciseInstance.Iterations[len(exerciseInstance.Iterations)] = *NewIteration(mainset.Reps, mainset.Weights, Map(mainset.Weights, func(item float64) float64 { return (item - mainset.Weight) }), newID,
+	newID := len(exerciseInstance.Iterations)
+
+	exerciseInstance.Iterations[newID] = *NewIteration(mainset.Reps, mainset.Weights, Map(mainset.Weights, func(item float64) float64 { return (item - mainset.Weight) }), newID,
 		mainset.Sets,
 		mainset.Weight,
 		mainset.Date,
@@ -129,13 +131,15 @@ func fetchUser(request ExerciseRequest) (User, error) {
 	if !ok {
 		err := loadUserDB(request, &user)
 
-		if err != nil {
-			//needs changing to not create new user
-			users[request.Username] = User{Name: request.Username,
-				Exercises: make(map[string]Exercise)}
+		//if err != nil {
+		//needs changing to not create new user
+		users[request.Username] = User{Name: request.Username,
+			Exercises: make(map[string]Exercise)}
 
-			return User{}, err
-		}
+		user = users[request.Username]
+
+		return user, err
+		//}
 	}
 	//Try and assign the user object
 	return user, nil
