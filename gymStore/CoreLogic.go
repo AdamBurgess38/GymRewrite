@@ -1,8 +1,27 @@
 package gymstore
 
-import "fmt"
+import (
+	"fmt"
+	"gymApplication/helpers"
+)
 
 var store GymStoreContract
+
+func DeleteExercise(request ExerciseRequest) error {
+	user, err := fetchUser(request)
+	if err != nil {
+		return err
+	}
+
+	_, ok := user.Exercises[request.ExerciseName]
+	if !ok {
+		return fmt.Errorf("exercise: %s does not exist for user: %s", request.Username, request.ExerciseName)
+	}
+
+	delete(user.Exercises, request.ExerciseName)
+
+	return nil
+}
 
 func GetExercise(request ExerciseRequest) (Exercise, error) {
 
@@ -60,7 +79,7 @@ func generateDropSets(inputs []AddUserInput) []Dropset {
 		}
 		dropset.Sets = len(dropset.Reps)
 
-		dropset := makeDropset(dropset.Reps, dropset.Weights, Map(dropset.Weights, func(item float64) float64 { return (item - dropset.Weight) }),
+		dropset := makeDropset(dropset.Reps, dropset.Weights, helpers.Map(dropset.Weights, func(item float64) float64 { return (item - dropset.Weight) }),
 			dropset.Sets,
 			dropset.Weight,
 			totalWeightRep, totalReps/float64(len(dropset.Reps)), totalWeight/float64(len(dropset.Weights)), totalWeightRep/float64(len(dropset.Weights)))
@@ -101,7 +120,7 @@ func AddExercise(request AddExerciseRequest) error {
 
 	newID := len(exerciseInstance.Iterations)
 
-	exerciseInstance.Iterations[newID] = *NewIteration(mainset.Reps, mainset.Weights, Map(mainset.Weights, func(item float64) float64 { return (item - mainset.Weight) }), newID,
+	exerciseInstance.Iterations[newID] = *NewIteration(mainset.Reps, mainset.Weights, helpers.Map(mainset.Weights, func(item float64) float64 { return (item - mainset.Weight) }), newID,
 		mainset.Sets,
 		mainset.Weight,
 		mainset.Date,
@@ -168,12 +187,4 @@ func NewIteration(reps []float64, weights []float64, variances []float64, ID int
 		AverageWeightRepTotal: averageWeightRepTotal,
 		DropSet:               dropsets,
 	})
-}
-
-func Map[T, V any](ts []T, fn func(T) V) []V {
-	result := make([]V, len(ts))
-	for i, t := range ts {
-		result[i] = fn(t)
-	}
-	return result
 }
