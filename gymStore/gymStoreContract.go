@@ -13,6 +13,6 @@ Delete iteration
 
 modify exercise? (One for the future*/
 type GymStoreContract interface {
-	LoadUser(username string) error
-	SaveUser(user User) error
+	LoadUser(username string, path string) (User, error)
+	SaveUser(user User, path string) error
 }

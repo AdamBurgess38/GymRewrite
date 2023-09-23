@@ -23,6 +23,30 @@ func DeleteExercise(request ExerciseRequest) error {
 	return nil
 }
 
+func DeleteExerciseIteration(request ExerciseInstanceRequest) error {
+	user, err := fetchUser(request.ExerciseIdentifier)
+	if err != nil {
+		return err
+	}
+
+	record, ok := user.Exercises[request.ExerciseIdentifier.ExerciseName]
+	if !ok {
+		return fmt.Errorf("exercise: %s does not exist for user: %s", request.ExerciseIdentifier.ExerciseName, request.ExerciseIdentifier.Username)
+	}
+
+	_, exists := record.Iterations[request.ID]
+
+	if !exists {
+		return fmt.Errorf("exercise iteration %d does not exist for exercise: %s ", request.ID, request.ExerciseIdentifier.ExerciseName)
+	}
+
+	delete(record.Iterations, request.ID)
+
+	user.Exercises[request.ExerciseIdentifier.ExerciseName] = record
+
+	return nil
+}
+
 func GetExercise(request ExerciseRequest) (Exercise, error) {
 
 	//Validate request
@@ -93,10 +117,12 @@ func generateDropSets(inputs []AddUserInput) []Dropset {
 
 func AddExercise(request AddExerciseRequest) error {
 
-	user, err := fetchUser(request.ExerciseIdentifier)
-	if err != nil {
-		return err
-	}
+	user, _ := fetchUser(request.ExerciseIdentifier)
+
+	//Should the user already exist? //Leave this comment here for later to think about
+	// if err != nil {
+	// 	return err
+	// }
 
 	exerciseInstance, ok := user.Exercises[request.ExerciseIdentifier.ExerciseName]
 
@@ -119,7 +145,7 @@ func AddExercise(request AddExerciseRequest) error {
 	}
 
 	newID := len(exerciseInstance.Iterations)
-
+	fmt.Println(newID)
 	exerciseInstance.Iterations[newID] = *NewIteration(mainset.Reps, mainset.Weights, helpers.Map(mainset.Weights, func(item float64) float64 { return (item - mainset.Weight) }), newID,
 		mainset.Sets,
 		mainset.Weight,
@@ -128,6 +154,11 @@ func AddExercise(request AddExerciseRequest) error {
 
 	user.Exercises[request.ExerciseIdentifier.ExerciseName] = exerciseInstance
 	//Save to DB
+
+	//Needs changing to support the "current version"
+	store = &jsonStore{}
+
+	store.SaveUser(user, "users/")
 
 	return nil
 }
@@ -148,27 +179,34 @@ func fetchUser(request ExerciseRequest) (User, error) {
 	user, ok := users[request.Username]
 
 	if !ok {
-		err := loadUserDB(request, &user)
+		user, err := loadUserDB(request, &user)
 
-		//if err != nil {
-		//needs changing to not create new user
-		users[request.Username] = User{Name: request.Username,
-			Exercises: make(map[string]Exercise)}
+		if err != nil {
+			//needs changing to not create new user
+			users[request.Username] = User{Name: request.Username,
+				Exercises: make(map[string]Exercise)}
 
-		user = users[request.Username]
+			user = users[request.Username]
 
-		return user, err
-		//}
+			return user, err
+		}
+		users[request.Username] = user
+		return user, nil
 	}
 	//Try and assign the user object
 	return user, nil
 }
 
 //For now this will just create a new user, in the future you have to manually make one
-func loadUserDB(request ExerciseRequest, user *User) error {
+func loadUserDB(request ExerciseRequest, user *User) (User, error) {
 
-	//Try and assign the user object
-	return nil
+	store := &jsonStore{}
+	ue, err := store.LoadUser(request.Username, "users/")
+
+	if err != nil {
+		return User{}, err
+	}
+	return ue, err
 }
 
 func NewIteration(reps []float64, weights []float64, variances []float64, ID int, sets int, weight float64, date string, note string, totalWeight float64, averageRep float64, averageWeight float64, averageWeightRepTotal float64, dropsets []Dropset) *Iteration {

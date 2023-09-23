@@ -13,7 +13,7 @@ func TestFullFlow(t *testing.T) {
 	}{
 		{
 			name:     "Add a single exercise to user with dropset",
-			username: "Adam",
+			username: "AdamBurgessFull",
 			request: AddExerciseRequest{
 				ExerciseIdentifier: ExerciseRequest{Username: "Adam", ExerciseName: "Bench Press"},
 				MainSet: AddUserInput{
@@ -110,7 +110,7 @@ func TestAddExercise(t *testing.T) {
 	}{
 		{
 			name:     "Add a single exercise to user with dropset",
-			username: "Adam",
+			username: "AdamAdd",
 			request: AddExerciseRequest{
 				ExerciseIdentifier: ExerciseRequest{Username: "Adam", ExerciseName: "Bench Press"},
 				MainSet: AddUserInput{
@@ -159,6 +159,86 @@ func TestAddExercise(t *testing.T) {
 			}
 
 			fmt.Println(exerciseInstance)
+		})
+	}
+
+}
+
+func TestDeleteExercise(t *testing.T) {
+	tests := []struct {
+		name           string
+		username       string
+		addRequest     AddExerciseRequest
+		deleteRequest  ExerciseInstanceRequest
+		expectedLength int
+	}{
+		{
+			name:     "Add a single exercise to user with dropset",
+			username: "AdamDelete",
+			addRequest: AddExerciseRequest{
+				ExerciseIdentifier: ExerciseRequest{Username: "AdamDelete", ExerciseName: "Bench Press"},
+				MainSet: AddUserInput{
+					Reps:    []float64{1, 1, 1, 1},
+					Weights: []float64{1, 1, 1, 1},
+					Sets:    4,
+					Weight:  1,
+					Date:    "01-01-2000",
+					Note:    "Test note"},
+				Dropsets: []AddUserInput{
+					{
+						Reps:    []float64{1, 1, 1, 1},
+						Weights: []float64{1, 1, 1, 1},
+						Sets:    4,
+						Weight:  1,
+						Date:    "01-01-2000",
+						Note:    "Test note",
+					},
+					{
+						Reps:    []float64{1, 1, 1, 1},
+						Weights: []float64{1, 1, 1, 1},
+						Sets:    4,
+						Weight:  1,
+						Date:    "01-01-2000",
+						Note:    "Test note",
+					}},
+			},
+			deleteRequest: ExerciseInstanceRequest{
+				ExerciseIdentifier: ExerciseRequest{Username: "AdamDelete", ExerciseName: "Bench Press"},
+				ID:                 0,
+			},
+			expectedLength: 1,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			//Not testing this
+			AddExercise(test.addRequest)
+			AddExercise(test.addRequest)
+
+			DeleteExerciseIteration(test.deleteRequest)
+
+			//test one delete
+
+			user, ok := users[test.username]
+
+			if !ok {
+				t.Fatalf("User with username %s, does not exist: they should\n", test.username)
+			}
+
+			exerciseInstance, ok := user.Exercises[test.addRequest.ExerciseIdentifier.ExerciseName]
+
+			if !ok {
+				t.Fatalf("Exercise instance expected of %s, does not exist\n", test.addRequest.ExerciseIdentifier.ExerciseName)
+			}
+
+			result := len(exerciseInstance.Iterations)
+
+			if result != test.expectedLength {
+				t.Fatalf("Unexpected exercise instance length, got %d, expected %d\n", result, test.expectedLength)
+			}
+
 		})
 	}
 

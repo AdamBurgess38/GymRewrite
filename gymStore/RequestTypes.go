@@ -11,6 +11,11 @@ type AddExerciseRequest struct {
 	Dropsets           []AddUserInput  `json:"Dropsets"`
 }
 
+type ExerciseInstanceRequest struct {
+	ExerciseIdentifier ExerciseRequest `json:"exerciseIdentifer"`
+	ID                 int
+}
+
 type AddUserInput struct {
 	Reps    []float64
 	Weights []float64
