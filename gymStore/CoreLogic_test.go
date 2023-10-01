@@ -15,8 +15,8 @@ func TestFullFlow(t *testing.T) {
 			name:     "Add a single exercise to user with dropset",
 			username: "AdamBurgessFull",
 			request: AddExerciseRequest{
-				ExerciseIdentifier: ExerciseRequest{Username: "Adam", ExerciseName: "Bench Press"},
-				MainSet: AddUserInput{
+				ExerciseIdentifier: ExerciseRequest{Username: "AdamBurgessFull", ExerciseName: "Bench Press"},
+				MainSet: &AddUserInput{
 					Reps:    []float64{1, 1, 1, 1},
 					Weights: []float64{1, 1, 1, 1},
 					Sets:    4,
@@ -43,6 +43,8 @@ func TestFullFlow(t *testing.T) {
 			},
 		},
 	}
+
+	StartUp("Testing/users/")
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -113,7 +115,7 @@ func TestAddExercise(t *testing.T) {
 			username: "AdamAdd",
 			request: AddExerciseRequest{
 				ExerciseIdentifier: ExerciseRequest{Username: "Adam", ExerciseName: "Bench Press"},
-				MainSet: AddUserInput{
+				MainSet: &AddUserInput{
 					Reps:    []float64{1, 1, 1, 1},
 					Weights: []float64{1, 1, 1, 1},
 					Sets:    4,
@@ -140,6 +142,8 @@ func TestAddExercise(t *testing.T) {
 			},
 		},
 	}
+
+	StartUp("Testing/users/")
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -177,7 +181,7 @@ func TestDeleteExercise(t *testing.T) {
 			username: "AdamDelete",
 			addRequest: AddExerciseRequest{
 				ExerciseIdentifier: ExerciseRequest{Username: "AdamDelete", ExerciseName: "Bench Press"},
-				MainSet: AddUserInput{
+				MainSet: &AddUserInput{
 					Reps:    []float64{1, 1, 1, 1},
 					Weights: []float64{1, 1, 1, 1},
 					Sets:    4,
@@ -209,6 +213,8 @@ func TestDeleteExercise(t *testing.T) {
 			expectedLength: 1,
 		},
 	}
+
+	StartUp("Testing/users/")
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

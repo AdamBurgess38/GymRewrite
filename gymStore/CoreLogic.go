@@ -6,6 +6,11 @@ import (
 )
 
 var store GymStoreContract
+var USER_STORE_PATH string
+
+func StartUp(defaultUserPath string) {
+	USER_STORE_PATH = defaultUserPath
+}
 
 func DeleteExercise(request ExerciseRequest) error {
 	user, err := fetchUser(request)
@@ -158,7 +163,7 @@ func AddExercise(request AddExerciseRequest) error {
 	//Needs changing to support the "current version"
 	store = &jsonStore{}
 
-	store.SaveUser(user, "users/")
+	store.SaveUser(user, USER_STORE_PATH)
 
 	return nil
 }
@@ -201,7 +206,7 @@ func fetchUser(request ExerciseRequest) (User, error) {
 func loadUserDB(request ExerciseRequest, user *User) (User, error) {
 
 	store := &jsonStore{}
-	ue, err := store.LoadUser(request.Username, "users/")
+	ue, err := store.LoadUser(request.Username, USER_STORE_PATH)
 
 	if err != nil {
 		return User{}, err
